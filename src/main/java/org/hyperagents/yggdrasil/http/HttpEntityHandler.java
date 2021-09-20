@@ -373,7 +373,7 @@ public class HttpEntityHandler {
         //NEW
         String storeReply;
         String accepted = routingContext.request().headers().get("Accept");
-        if(accepted.equals("application/ld+json")) {
+        if(accepted != null && accepted.equals("application/ld+json")) {
           httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, accepted);
           String thing = reply.result().body();
           if(thing != null && ! thing.isEmpty()) {
