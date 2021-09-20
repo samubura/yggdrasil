@@ -3,6 +3,7 @@ package org.hyperagents.yggdrasil.http;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import ch.unisg.ics.interactions.wot.td.io.json.TDJsonWriter;
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -20,8 +21,8 @@ import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
+import ch.unisg.ics.interactions.wot.td.io.graph.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.io.graph.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import io.vertx.core.AsyncResult;
@@ -50,8 +51,10 @@ public class HttpEntityHandler {
   public static final String REQUEST_URI = "org.hyperagents.yggdrasil.eventbus.headers.requestUri";
   public static final String ENTITY_URI_HINT = "org.hyperagents.yggdrasil.eventbus.headers.slug";
   public static final String CONTENT_TYPE = "org.hyperagents.yggdrasil.eventbus.headers.contentType";
+  private static final String ACCEPTED_CONTENT = "org.hyperagents.yggdrasil.eventbus.headers.acceptedContent";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
+
 
   private final Vertx vertx;
   private final CartagoEntityHandler cartagoHandler;
@@ -91,10 +94,11 @@ public class HttpEntityHandler {
         .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
         .addAction(new ActionAffordance.Builder(new Form.Builder(envURI + "/workspaces/").build())
             .addSemanticType("http://w3id.org/eve#MakeWorkspace")
+            .addName("MakeWorkspace")
             .build())
         .build();
 
-    createEntity(context, TDGraphWriter.write(td));
+    createEntity(context, new TDGraphWriter(td).write());
   }
 
   public void handleCreateWorkspace(RoutingContext context) {
@@ -361,14 +365,30 @@ public class HttpEntityHandler {
         HttpServerResponse httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
 
-        httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
-
         // Note: forEach produces duplicate keys. If anyone wants to, please replace this with a Java 8 version ;-)
         for(String headerName : headers.keySet()) {
           httpResponse.putHeader(headerName, headers.get(headerName).stream().collect(Collectors.joining(",")));
         }
 
-        String storeReply = reply.result().body();
+        //NEW
+        String storeReply;
+        String accepted = routingContext.request().headers().get("Accept");
+        if(accepted.equals("application/ld+json")) {
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, accepted);
+          String thing = reply.result().body();
+          if(thing != null && ! thing.isEmpty()) {
+            ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, thing);
+            //TODO I have a problem since I'm losing the context here
+            storeReply = new TDJsonWriter(td)
+              .write();
+          } else {
+            storeReply = null;
+          }
+        } else {
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+          storeReply = reply.result().body();
+        }
+
         if (storeReply != null && !storeReply.isEmpty()) {
           httpResponse.end(storeReply);
         } else {

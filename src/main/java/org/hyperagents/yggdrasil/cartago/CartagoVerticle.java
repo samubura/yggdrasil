@@ -23,7 +23,7 @@ import cartago.util.agent.Percept;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
+import ch.unisg.ics.interactions.wot.td.io.graph.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
@@ -177,7 +177,8 @@ public class CartagoVerticle extends AbstractVerticle {
                     .build())
                 .addRequiredProperties("artifactClass", "artifactName")
                 .build())
-            .build())
+          .addName("MakeArtifact")
+          .build())
         .build();
 
     return new TDGraphWriter(td)
