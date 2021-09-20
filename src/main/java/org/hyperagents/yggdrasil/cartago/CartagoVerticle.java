@@ -177,7 +177,8 @@ public class CartagoVerticle extends AbstractVerticle {
                     .build())
                 .addRequiredProperties("artifactClass", "artifactName")
                 .build())
-            .build())
+          .addName("MakeArtifact")
+          .build())
         .build();
 
     return new TDGraphWriter(td)

@@ -94,6 +94,7 @@ public class HttpEntityHandler {
         .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
         .addAction(new ActionAffordance.Builder(new Form.Builder(envURI + "/workspaces/").build())
             .addSemanticType("http://w3id.org/eve#MakeWorkspace")
+            .addName("MakeWorkspace")
             .build())
         .build();
 
