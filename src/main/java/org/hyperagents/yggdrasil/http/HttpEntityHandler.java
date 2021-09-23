@@ -68,6 +68,7 @@ public class HttpEntityHandler {
     String entityIRI = routingContext.request().absoluteURI();
 
     LOGGER.info("GET request: " + entityIRI);
+    LOGGER.info("REQUEST: "+routingContext.request().headers().toString());
 
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
